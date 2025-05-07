@@ -1,1 +1,1 @@
-python3 skinbaron_scraper.py
+python skinbaron_scraper.py
