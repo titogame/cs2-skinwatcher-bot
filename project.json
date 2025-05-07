@@ -2,9 +2,9 @@
   "name": "cs2-skinwatcher-bot",
   "builds": [
     {
-      "src": "skinbaron_scraper_stickers_fix.py",
+      "src": "skinbaron_scraper.py",
       "use": "@railway/python"
     }
   ],
-  "start": "python3 skinbaron_scraper_stickers_fix.py"
+  "start": "python3 skinbaron_scraper.py"
 }
