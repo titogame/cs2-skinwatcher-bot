@@ -1,8 +1,0 @@
-{
-  "build": {
-    "env": {
-      "PYTHONUNBUFFERED": "1"
-    }
-  },
-  "start": "python3 skinbaron_scraper_stickers_fix.py"
-}
