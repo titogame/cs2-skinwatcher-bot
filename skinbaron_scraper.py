@@ -2,6 +2,7 @@
 import discord
 from discord.ext import commands
 import asyncio
+import os
 
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
@@ -32,13 +33,6 @@ class FilterModal(discord.ui.Modal, title="Ajouter un filtre SkinBaron"):
         placeholder="ex: Fire Serpent FN"
     )
 
-    def __init__(self):
-        super().__init__()
-        self.add_item(self.lien)
-        self.add_item(self.prix_min)
-        self.add_item(self.prix_max)
-        self.add_item(self.nom)
-
     async def on_submit(self, interaction: discord.Interaction):
         url = self.lien.value.strip()
         try:
@@ -51,7 +45,7 @@ class FilterModal(discord.ui.Modal, title="Ajouter un filtre SkinBaron"):
         name = self.nom.value.strip() if self.nom.value else "Sans nom"
 
         await interaction.response.send_message(
-            f"✅ Filtre lancé !🔖 {name}🔗 {url}💸 {min_price} € – {max_price} €", ephemeral=True
+            f"✅ Filtre lancé !\n🔖 {name}\n🔗 {url}\n💸 {min_price} € – {max_price} €", ephemeral=True
         )
 
         task = asyncio.create_task(
@@ -249,6 +243,14 @@ async def scraper_loop(channel, url, min_price, max_price, user_id):
                 )
                 if image_url:
                     embed.set_image(url=image_url)
+
+                # Extraction des stickers
+                sticker_imgs = offer.select("div.sticker-col img")
+                stickers = [img.get("title", "").strip('"') for img in sticker_imgs if img.get("title")]
+
+                if stickers:
+                    embed.add_field(name="🏷️ Stickers", value="".join(stickers), inline=False)
+
 
                 if channel:
                     await channel.send(embed=embed)
