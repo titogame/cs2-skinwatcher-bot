@@ -32,6 +32,13 @@ class FilterModal(discord.ui.Modal, title="Ajouter un filtre SkinBaron"):
         placeholder="ex: Fire Serpent FN"
     )
 
+    def __init__(self):
+        super().__init__()
+        self.add_item(self.lien)
+        self.add_item(self.prix_min)
+        self.add_item(self.prix_max)
+        self.add_item(self.nom)
+
     async def on_submit(self, interaction: discord.Interaction):
         url = self.lien.value.strip()
         try:
@@ -44,7 +51,7 @@ class FilterModal(discord.ui.Modal, title="Ajouter un filtre SkinBaron"):
         name = self.nom.value.strip() if self.nom.value else "Sans nom"
 
         await interaction.response.send_message(
-            f"✅ Filtre lancé !\n🔖 {name}\n🔗 {url}\n💸 {min_price} € – {max_price} €", ephemeral=True
+            f"✅ Filtre lancé !🔖 {name}🔗 {url}💸 {min_price} € – {max_price} €", ephemeral=True
         )
 
         task = asyncio.create_task(
@@ -100,14 +107,9 @@ async def on_ready():
     except Exception as e:
         print(f"❌ Erreur de synchronisation : {e}")
 
-
 @bot.tree.command(name="filtre", description="Ajouter un filtre SkinBaron")
 async def filtre(interaction: discord.Interaction):
-    available_channels = [
-        ch for ch in interaction.guild.text_channels
-        if ch.permissions_for(interaction.user).send_messages
-    ]
-    await interaction.response.send_modal(FilterModal(available_channels))
+    await interaction.response.send_modal(FilterModal())
 
 @bot.tree.command(name="mesfiltres", description="Afficher vos filtres actifs")
 async def mesfiltres(interaction: discord.Interaction):
