@@ -10,30 +10,72 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 # Dictionnaire des filtres actifs : {user_id: [ {task, url, min, max, name} ]}
 active_filters = {}
 
+
 class FilterModal(discord.ui.Modal, title="Ajouter un filtre SkinBaron"):
-    lien = discord.ui.TextInput(
-        label="Lien SkinBaron", 
-        style=discord.TextStyle.short,
-        placeholder="https://skinbaron.de/..."
-    )
-    prix_min = discord.ui.TextInput(
-        label="Prix minimum (€)", 
-        style=discord.TextStyle.short,
-        placeholder="0"
-    )
-    prix_max = discord.ui.TextInput(
-        label="Prix maximum (€)", 
-        style=discord.TextStyle.short,
-        placeholder="1000"
-    )
-    nom = discord.ui.TextInput(
-        label="Nom du filtre (facultatif)", 
-        style=discord.TextStyle.short,
-        required=False,
-        placeholder="ex: Fire Serpent FN"
-    )
+    def __init__(self, available_channels):
+        super().__init__()
+        self.available_channels = available_channels
+
+        self.lien = discord.ui.TextInput(
+            label="Lien SkinBaron", 
+            style=discord.TextStyle.short,
+            placeholder="https://skinbaron.de/..."
+        )
+        self.prix_min = discord.ui.TextInput(
+            label="Prix minimum (€)", 
+            style=discord.TextStyle.short,
+            placeholder="0"
+        )
+        self.prix_max = discord.ui.TextInput(
+            label="Prix maximum (€)", 
+            style=discord.TextStyle.short,
+            placeholder="1000"
+        )
+        self.channel_select = discord.ui.Select(
+            placeholder="Choisir un salon d'alerte",
+            options=[
+                discord.SelectOption(label=ch.name, value=str(ch.id))
+                for ch in available_channels
+            ]
+        )
+        self.add_item(self.lien)
+        self.add_item(self.prix_min)
+        self.add_item(self.prix_max)
+        self.add_item(self.channel_select)
 
     async def on_submit(self, interaction: discord.Interaction):
+        url = self.lien.value.strip()
+        try:
+            min_price = float(self.prix_min.value.strip().replace(",", "."))
+            max_price = float(self.prix_max.value.strip().replace(",", "."))
+        except ValueError:
+            await interaction.response.send_message("❌ Prix invalide", ephemeral=True)
+            return
+
+        try:
+            target_channel = interaction.guild.get_channel(int(self.channel_select.values[0]))
+        except Exception:
+            await interaction.response.send_message("❌ Erreur de salon", ephemeral=True)
+            return
+
+        await interaction.response.send_message(
+            f"✅ Filtre lancé dans <#{target_channel.id}> !\n🔗 {url}\n💸 {min_price} € – {max_price} €", ephemeral=True
+        )
+
+        task = asyncio.create_task(
+            scraper_loop(target_channel, url, min_price, max_price, interaction.user.id)
+        )
+        filter_info = {
+            "task": task,
+            "url": url,
+            "min": min_price,
+            "max": max_price,
+            "channel": target_channel.id
+        }
+        active_filters.setdefault(interaction.user.id, []).append(filter_info)
+
+
+async def on_submit(self, interaction: discord.Interaction):
         url = self.lien.value.strip()
         try:
             min_price = float(self.prix_min.value.strip().replace(",", "."))
